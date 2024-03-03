@@ -99,6 +99,19 @@ impl Complex {
         d
     }
 
+    /// Calculate the Euler characteristic
+    pub fn euler_characteristic(&self) -> i32 {
+        let d = self.dim();
+        let mut x = 0;
+        let mut sign = 1i32;
+
+        for i in 0..d {
+            x += sign * (self.handles().filter(|h| self.get(*h).dim() == i).count() as i32);
+            sign *= -1;
+        }
+        x
+    }
+
     /// Get the j-skeleton of the complex, i.e., the subcomplex of simplices with dim <= j
     pub fn skeleton(&self, j: i32) -> Complex {
         let mut subcomplex = Complex::new();
@@ -170,6 +183,13 @@ mod tests {
         assert_eq!(complex.get(ac).dim(), 1);
         assert_eq!(complex.get(bc).dim(), 1);
         assert_eq!(complex.dim(), 2);
+    }
+
+    #[test]
+    fn euler_characteristic() {
+        let mut complex = Complex::new();
+        let _abcd = complex.push_recursive(Simplex::from(vec![1, 2, 3, 4]));
+        assert_eq!(complex.euler_characteristic(), 0);
     }
 
     #[test]
