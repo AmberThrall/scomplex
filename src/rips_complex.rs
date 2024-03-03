@@ -52,10 +52,12 @@ impl<'a> RipsComplex<'a> {
         }
 
         // Add every edge ab if the distance from a to b is less than radius
-        for comb in (0..self.points.len()).combinations(2) {
-            let dist = (self.distance_fn)(&self.points[comb[0]], &self.points[comb[1]]);
-            if dist < self.threshold {
-                complex.push(splx![comb[0], comb[1]]);
+        if self.max_dim > 0 {
+            for comb in (0..self.points.len()).combinations(2) {
+                let dist = (self.distance_fn)(&self.points[comb[0]], &self.points[comb[1]]);
+                if dist < self.threshold {
+                    complex.push(splx![comb[0], comb[1]]);
+                }
             }
         }
 
