@@ -102,11 +102,23 @@ impl Complex {
     /// Calculate the Euler characteristic
     pub fn euler_characteristic(&self) -> i32 {
         let d = self.dim();
+        if d < 0 {
+            return 0;
+        }
+
+        let mut counts = vec![0; d as usize + 1];
+        let mut dfs = Dfs::new(&self.graph, self.root);
+        while let Some(nx) = dfs.next(&self.graph) {
+            let tau_dim = self.get(nx).dim();
+            if tau_dim >= 0 {
+                counts[tau_dim as usize] += 1;
+            }
+        }
+
         let mut x = 0;
         let mut sign = 1i32;
-
-        for i in 0..d {
-            x += sign * (self.handles().filter(|h| self.get(*h).dim() == i).count() as i32);
+        for i in 0..(d as usize) {
+            x += sign * counts[i];
             sign *= -1;
         }
         x
