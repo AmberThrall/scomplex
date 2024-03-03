@@ -23,7 +23,7 @@ impl<'a> RipsComplex<'a> {
         RipsComplex {
             points,
             threshold,
-            max_dim: 2,
+            max_dim: 1,
             distance_fn: Box::new(euclidean_distance),
         }
     }
