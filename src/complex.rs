@@ -1,4 +1,6 @@
 use crate::Simplex;
+use crate::simplex::Orientation;
+use super::errors::OrientationError;
 use petgraph::{
     visit::{Bfs, Dfs}, Graph, Undirected
 };
@@ -37,6 +39,10 @@ impl Complex {
     /// Gets the tree's root (empty simplex)
     pub fn get_root(&self) -> &Simplex {
         self.get(self.root)
+    }
+
+    pub fn get_root_mut(&mut self) -> &mut Simplex {
+        self.get_mut(self.root)
     }
 
     /// Gets a `Vec` of parents of `handle`
@@ -101,8 +107,8 @@ impl Complex {
     pub fn push_recursive(&mut self, simplex: Simplex) -> SimplexHandle {
         // Add the simplex's faces
         if simplex.dim() > 0 {
-            for v in &simplex.vertices {
-                let mut set = simplex.vertices.clone();
+            for v in simplex.vertices() {
+                let mut set = simplex.vertices().clone();
                 set.remove(v);
                 self.push_recursive(Simplex::new(set));
             }
@@ -114,6 +120,10 @@ impl Complex {
     /// Looks up a simplex node from a handle
     pub fn get(&self, handle: SimplexHandle) -> &Simplex {
         &self.graph[handle]
+    }
+    
+    pub fn get_mut(&mut self, handle: SimplexHandle) -> &mut Simplex {
+        &mut self.graph[handle]
     }
 
     /// Get an iterator over every simplex handle
@@ -183,6 +193,87 @@ impl Complex {
     pub fn hasse(&self) -> String {
         let dot = petgraph::dot::Dot::with_config(&self.graph, &[petgraph::dot::Config::EdgeNoLabel]);
         format!("{}", dot)
+    }
+
+    /// Attempts to orient the simplices.
+    pub fn orient(&mut self) -> Result<(), OrientationError> {
+        // 1. Set the orientation of a random d-simplex and induce its orientation onto its faces, then
+        //    get its neighbors
+        let d = self.dim();
+        let mut neighbors = Vec::new();
+        for h in self.handles() {
+            let sigma = self.get_mut(h);
+            sigma.set_orientation(Orientation::None);
+
+            if sigma.dim() == d && neighbors.is_empty() {
+                sigma.set_orientation(Orientation::Even);
+                self._orient_faces(h)?;
+                neighbors = self.get_neighbors(h);
+            }
+        }
+
+        // 2. For each neighbor:
+        //   a. Set the orientation such that the induced orientation on its vfaces is opposite
+        //      their current orientation
+        //   b. Induce orientation onto non-oriented faces
+        //   c. Add each unoriented neighbor to the neighbors list
+        while let Some(nbr) = neighbors.pop() {
+            let mut orientations: Vec<Orientation> = Vec::new();
+
+            // Determine the needed orientations
+            for face_h in self.get_parents(nbr) {
+                let tau = self.get(face_h);
+                if tau.orientation() == Orientation::None {
+                    continue;
+                }
+
+                let tau_orientation = tau.orientation();
+                let mut tau_clone = tau.clone();
+
+                let sigma = self.get_mut(nbr);
+                sigma.set_orientation(Orientation::Even);
+                tau_clone.induced_orientation(sigma)?;
+                if tau_clone.orientation() == tau_orientation {
+                    sigma.swap_orientation()?;
+                }
+
+                orientations.push(sigma.orientation());
+            }
+
+            // Check that we only need one orientation class
+            if orientations.len() > 1 {
+                for i in 0..orientations.len()-1 {
+                    if orientations[i] != orientations[i+1] {
+                        self.get_mut(nbr).set_orientation(Orientation::None);
+                        return Err(OrientationError::Unorientable);
+                    }
+                }
+            }
+
+            // Induce orientation onto unoriented faces and get neighbors
+            self._orient_faces(nbr)?;
+            for nbr_of_nbr in self.get_neighbors(nbr) {
+                if self.get(nbr_of_nbr).orientation() == Orientation::None && !neighbors.contains(&nbr_of_nbr) {
+                    neighbors.push(nbr_of_nbr);
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn _orient_faces(&mut self, root: SimplexHandle) -> Result<(), OrientationError> {
+        let sigma = self.get(root).clone();
+
+        for h in self.get_parents(root) {
+            let tau = self.get_mut(h);
+            if tau.orientation() == Orientation::None {
+                tau.induced_orientation(&sigma)?;
+                self._orient_faces(h)?;
+            }
+        }
+
+        Ok(())
     }
 }
 
@@ -266,5 +357,23 @@ mod tests {
         assert!(neighbors.contains(&abd));
         assert!(neighbors.contains(&acd));
         assert!(neighbors.contains(&bcd));
+    }
+
+    #[test]
+    fn orient() {
+        let mut disk = Complex::new();
+        for i in 0..5 {
+            disk.push_recursive(Simplex::from(vec![i,(i + 1) % 5,5]));
+        }
+        assert!(disk.orient().is_ok());
+
+        let mut mobius_strip = Complex::new();
+        mobius_strip.push_recursive(Simplex::from(vec![0, 1, 4]));
+        mobius_strip.push_recursive(Simplex::from(vec![0, 3, 4]));
+        mobius_strip.push_recursive(Simplex::from(vec![0, 3, 5]));
+        mobius_strip.push_recursive(Simplex::from(vec![1, 2, 4]));
+        mobius_strip.push_recursive(Simplex::from(vec![2, 4, 5]));
+        mobius_strip.push_recursive(Simplex::from(vec![2, 3, 5]));
+        assert!(mobius_strip.orient().is_err());
     }
 }
