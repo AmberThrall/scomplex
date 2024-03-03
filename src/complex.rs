@@ -5,8 +5,10 @@ use petgraph::{
     visit::{Bfs, Dfs},
 };
 
+/// Pointer to simplex in complex.
 pub type SimplexHandle = petgraph::graph::NodeIndex;
 
+/// Struct representing an abstract simplicial complex.
 pub struct Complex {
     graph: Graph<Simplex,f32,Undirected>,
     root: SimplexHandle,
@@ -22,6 +24,16 @@ impl Complex {
             graph,
             root,
         }
+    }
+
+    /// Returns the number of simplices
+    pub fn num_simplices(&self) -> usize {
+        self.graph.node_count()
+    }
+
+    /// Returns the number of simplicies by dimension
+    pub fn num_simplices_by_dimension(&self, d: i32) -> usize {
+        self.handles().filter(|h| self.get(*h).dim() == d).count()
     }
 
     /// Gets the tree's root (empty simplex)
@@ -159,7 +171,6 @@ impl Clone for Complex {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -210,7 +221,7 @@ mod tests {
         let _abcd = complex.push_recursive(Simplex::from(vec![1, 2, 3, 4]));
 
         let skele2 = complex.skeleton(2);
-        let ntri = skele2.handles().filter(|h| skele2.get(*h).dim() == 2).count();
+        let ntri = skele2.num_simplices_by_dimension(2);
         assert_eq!(skele2.dim(), 2);
         assert_eq!(ntri, 4);
     }
