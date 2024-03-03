@@ -90,8 +90,9 @@ impl Complex {
 
         while let Some(nx) = bfs.next(&self.graph) {
             let tau = self.get(nx);
-
-            if tau.is_face(sigma) && tau.dim() + 1 == d {
+            if tau.dim() + 1 > d {
+                break;
+            } else if tau.is_face(sigma) && tau.dim() + 1 == d {
                 parents.push(nx);
             }
         }
@@ -150,23 +151,14 @@ impl Complex {
     /// Calculate the Euler characteristic
     pub fn euler_characteristic(&self) -> i32 {
         let d = self.dim();
-        if d < 0 {
+        if d <= 0 {
             return 0;
-        }
-
-        let mut counts = vec![0; d as usize + 1];
-        let mut dfs = Dfs::new(&self.graph, self.root);
-        while let Some(nx) = dfs.next(&self.graph) {
-            let tau_dim = self.get(nx).dim();
-            if tau_dim >= 0 {
-                counts[tau_dim as usize] += 1;
-            }
         }
 
         let mut x = 0;
         let mut sign = 1i32;
-        for i in 0..(d as usize) {
-            x += sign * counts[i];
+        for i in 0..(d as usize)+1 {
+            x += sign * (self.num_simplices_by_dimension(i as i32) as i32);
             sign *= -1;
         }
         x
@@ -323,6 +315,7 @@ mod tests {
         assert_eq!(complex.get(ac).dim(), 1);
         assert_eq!(complex.get(bc).dim(), 1);
         assert_eq!(complex.dim(), 2);
+        println!("{}", complex.hasse());
     }
 
     #[test]
