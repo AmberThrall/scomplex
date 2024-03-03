@@ -4,6 +4,8 @@ use super::errors::OrientationError;
 use petgraph::{
     visit::{Bfs, Dfs}, Graph, Undirected
 };
+use std::collections::HashSet;
+use itertools::*;
 
 /// Pointer to simplex in complex.
 pub type SimplexHandle = petgraph::graph::NodeIndex;
@@ -250,6 +252,38 @@ impl Complex {
         }
 
         Ok(())
+    }
+
+    /// Finds all missing `dim` simplices and adds them to the complex.
+    pub fn fill_holes(&mut self, dim: i32) {
+        if dim <= 0 { return; }
+
+        // Get all (dim+1) combinations of (dim-1) simplices.
+        let combinations = self.iter()
+            .filter(|h| self.get(*h).dim() == dim-1)
+            .combinations(dim as usize + 1);
+
+        let mut patches = Vec::new();
+        // For each combination, check if the union of simplices is (dim+1)-dimensional.
+        for comb in combinations {
+            let mut union: HashSet<usize> = HashSet::new();
+            for h in comb {
+                let sigma = self.get(h);
+                union = union.union(sigma.vertices())
+                    .map(|x| *x)
+                    .collect();
+            }
+
+            if union.len() == dim as usize + 1 {
+                let sigma = Simplex::new(union);
+                patches.push(sigma);
+            }
+        }
+
+        // Add in the patches.
+        for patch in patches {
+            self.push(patch);
+        }
     }
 }
 
