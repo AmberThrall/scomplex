@@ -22,7 +22,7 @@ fn main() {
     let now = Instant::now();
     let mut complex = Complex::new();
     for tri in triangles {
-        complex.push_recursive(Simplex::from(tri));
+        complex.push(Simplex::from(tri));
     }
     let elapsed = now.elapsed();
     println!("Construction: {:.2?}", elapsed);

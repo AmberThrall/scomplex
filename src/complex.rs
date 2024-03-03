@@ -73,49 +73,37 @@ impl Complex {
         neighbors
     }
 
-    /// Append a simplex to the complex, returning a handle to the simplex.
+    /// Recursively adds a simplex and its faces to the complex, returns a handle to the top simplex.
     /// If the simplex already is part of the complex, it returns the handle to it.
     pub fn push(&mut self, simplex: Simplex) -> SimplexHandle {
         if let Some(handle) = self.find(&simplex) {
             return handle;
         }
 
-        // Actually add the simplex to the graph
-        let handle = self.graph.add_node(simplex);
-        let sigma = self.get(handle);
-        let d = sigma.dim();
-
-        let mut bfs = Bfs::new(&self.graph, self.root);
-        let mut parents = Vec::new();
-
-        while let Some(nx) = bfs.next(&self.graph) {
-            let tau = self.get(nx);
-            if tau.dim() + 1 > d {
-                break;
-            } else if tau.is_face(sigma) && tau.dim() + 1 == d {
-                parents.push(nx);
-            }
-        }
-        
-        for nx in parents {
-            self.graph.add_edge(nx, handle, 0.0);
-        }
-
-        handle
-    }
-
-    /// Recursively adds a simplex and its faces to the complex, returns a handle to the top simplex.
-    pub fn push_recursive(&mut self, simplex: Simplex) -> SimplexHandle {
-        // Add the simplex's faces
         if simplex.dim() > 0 {
+            // Add the simplex's faces to the complex
+            let mut parents = Vec::new();
             for v in simplex.vertices() {
                 let mut set = simplex.vertices().clone();
                 set.remove(v);
-                self.push_recursive(Simplex::new(set));
-            }
-        }
 
-        self.push(simplex)
+                let h = self.push(Simplex::new(set));
+                parents.push(h);
+            }
+
+            // Actually add the simplex to the graph
+            let handle = self.graph.add_node(simplex);
+            for nx in parents {
+                self.graph.add_edge(nx, handle, 0.0);
+            }
+            handle
+        } else if simplex.dim() == 0 {
+            let handle = self.graph.add_node(simplex);
+            self.graph.add_edge(self.root, handle, 0.0);
+            handle
+        } else {
+            self.root
+        }
     }
 
     /// Looks up a simplex node from a handle
@@ -299,7 +287,7 @@ mod tests {
     #[test]
     fn push_recursive() {
         let mut complex = Complex::new();
-        let _abc = complex.push_recursive(Simplex::from(vec![1, 2, 3]));
+        let _abc = complex.push(Simplex::from(vec![1, 2, 3]));
 
         let a = complex.find(&Simplex::from(vec![1])).unwrap();
         let b = complex.find(&Simplex::from(vec![2])).unwrap();
@@ -315,20 +303,20 @@ mod tests {
         assert_eq!(complex.get(ac).dim(), 1);
         assert_eq!(complex.get(bc).dim(), 1);
         assert_eq!(complex.dim(), 2);
-        // println!("{}", complex.hasse());
     }
 
     #[test]
     fn euler_characteristic() {
         let mut complex = Complex::new();
-        let _abcd = complex.push_recursive(Simplex::from(vec![1, 2, 3, 4]));
+        let _abcd = complex.push(Simplex::from(vec![1, 2, 3, 4]));
         assert_eq!(complex.euler_characteristic(), 4 - 6 + 4 - 1);
+        println!("{}", complex.hasse());
     }
 
     #[test]
     fn skeleton() {
         let mut complex = Complex::new();
-        let _abcd = complex.push_recursive(Simplex::from(vec![1, 2, 3, 4]));
+        let _abcd = complex.push(Simplex::from(vec![1, 2, 3, 4]));
 
         let skele2 = complex.skeleton(2);
         let ntri = skele2.num_simplices_by_dimension(2);
@@ -339,7 +327,7 @@ mod tests {
     #[test]
     fn neighbors() {
         let mut complex = Complex::new();
-        let _abcd = complex.push_recursive(Simplex::from(vec![1, 2, 3, 4]));
+        let _abcd = complex.push(Simplex::from(vec![1, 2, 3, 4]));
 
         let abc = complex.find(&Simplex::from(vec![1,2,3])).unwrap();
         let abd = complex.find(&Simplex::from(vec![1,2,4])).unwrap();
@@ -356,17 +344,17 @@ mod tests {
     fn orient() {
         let mut disk = Complex::new();
         for i in 0..5 {
-            disk.push_recursive(Simplex::from(vec![i,(i + 1) % 5,5]));
+            disk.push(Simplex::from(vec![i,(i + 1) % 5,5]));
         }
         assert!(disk.orient().is_ok());
 
         let mut mobius_strip = Complex::new();
-        mobius_strip.push_recursive(Simplex::from(vec![0, 1, 4]));
-        mobius_strip.push_recursive(Simplex::from(vec![0, 3, 4]));
-        mobius_strip.push_recursive(Simplex::from(vec![0, 3, 5]));
-        mobius_strip.push_recursive(Simplex::from(vec![1, 2, 4]));
-        mobius_strip.push_recursive(Simplex::from(vec![2, 4, 5]));
-        mobius_strip.push_recursive(Simplex::from(vec![2, 3, 5]));
+        mobius_strip.push(Simplex::from(vec![0, 1, 4]));
+        mobius_strip.push(Simplex::from(vec![0, 3, 4]));
+        mobius_strip.push(Simplex::from(vec![0, 3, 5]));
+        mobius_strip.push(Simplex::from(vec![1, 2, 4]));
+        mobius_strip.push(Simplex::from(vec![2, 4, 5]));
+        mobius_strip.push(Simplex::from(vec![2, 3, 5]));
         assert!(mobius_strip.orient().is_err());
     }
 }
