@@ -101,10 +101,10 @@ impl Complex {
     pub fn push_recursive(&mut self, simplex: Simplex) -> SimplexHandle {
         // Add the simplex's faces
         if simplex.dim() > 0 {
-            for v in &simplex.0 {
-                let mut set = simplex.0.clone();
+            for v in &simplex.vertices {
+                let mut set = simplex.vertices.clone();
                 set.remove(v);
-                self.push_recursive(Simplex(set));
+                self.push_recursive(Simplex::new(set));
             }
         }
 
