@@ -33,7 +33,7 @@ impl Complex {
 
     /// Returns the number of simplicies by dimension
     pub fn num_simplices_by_dimension(&self, d: i32) -> usize {
-        self.handles().filter(|h| self.get(*h).dim() == d).count()
+        self.iter().filter(|h| self.get(*h).dim() == d).count()
     }
 
     /// Gets the tree's root (empty simplex)
@@ -128,7 +128,7 @@ impl Complex {
     }
 
     /// Get an iterator over every simplex handle
-    pub fn handles(&self) -> petgraph::graph::NodeIndices<petgraph::graph::DefaultIx> {
+    pub fn iter(&self) -> petgraph::graph::NodeIndices<petgraph::graph::DefaultIx> {
         self.graph.node_indices()
     }
 
@@ -193,7 +193,7 @@ impl Complex {
         //    get its neighbors
         let d = self.dim();
         let mut neighbors = Vec::new();
-        for h in self.handles() {
+        for h in self.iter() {
             let sigma = self.get_mut(h);
             sigma.set_orientation(Orientation::None);
 
@@ -315,14 +315,14 @@ mod tests {
         assert_eq!(complex.get(ac).dim(), 1);
         assert_eq!(complex.get(bc).dim(), 1);
         assert_eq!(complex.dim(), 2);
-        println!("{}", complex.hasse());
+        // println!("{}", complex.hasse());
     }
 
     #[test]
     fn euler_characteristic() {
         let mut complex = Complex::new();
         let _abcd = complex.push_recursive(Simplex::from(vec![1, 2, 3, 4]));
-        assert_eq!(complex.euler_characteristic(), 2);
+        assert_eq!(complex.euler_characteristic(), 4 - 6 + 4 - 1);
     }
 
     #[test]
