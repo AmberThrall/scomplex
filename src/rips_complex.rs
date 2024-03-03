@@ -11,6 +11,12 @@ fn euclidean_distance(a: &Point, b: &Point) -> f32 {
     s.sqrt()
 }
 
+/// Complex factory using Vietoris-Rips
+/// The resulting simplices represent the indices of the points, i.e., the 1-simplex {0,1} represents the edge `points[0]` -- `points[1]`.
+/// See the `rips_complex` example for implementation details.
+/// * `max_dim` - determines the the highest dimensional simplices to add to the complex.
+/// * `threshold` - only add edges if their distance is less than the threshold
+/// * `distance_fn` - distance function used to measure the distance between two points. Defaults to Euclidean distance.
 pub struct RipsComplex<'a> {
     points: &'a PointCloud,
     threshold: f32,
