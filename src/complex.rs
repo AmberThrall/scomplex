@@ -1,8 +1,6 @@
 use crate::Simplex;
 use petgraph::{
-    Graph,
-    Undirected,
-    visit::{Bfs, Dfs},
+    visit::{Bfs, Dfs}, Graph, Undirected
 };
 
 /// Pointer to simplex in complex.
@@ -39,6 +37,34 @@ impl Complex {
     /// Gets the tree's root (empty simplex)
     pub fn get_root(&self) -> &Simplex {
         self.get(self.root)
+    }
+
+    /// Gets a `Vec` of parents of `handle`
+    pub fn get_parents(&self, handle: SimplexHandle) -> Vec<SimplexHandle> {
+        let d = self.get(handle).dim();
+        self.graph.neighbors_undirected(handle).filter(|h| self.get(*h).dim() == d-1).collect()
+    }
+
+    /// Gets a `Vec` of children of `handle`
+    pub fn get_children(&self, handle: SimplexHandle) -> Vec<SimplexHandle> {
+        let d = self.get(handle).dim();
+        self.graph.neighbors_undirected(handle).filter(|h| self.get(*h).dim() == d+1).collect()
+    }
+
+    /// Gets a `Vec` of neighbors of `handle`
+    pub fn get_neighbors(&self, handle: SimplexHandle) -> Vec<SimplexHandle> {
+        let parents = self.get_parents(handle);
+
+        let mut neighbors = Vec::new();
+        for parent in parents {
+            for child in self.get_children(parent) {
+                if child != handle {
+                    neighbors.push(child);
+                }
+            }
+        }
+
+        neighbors
     }
 
     /// Append a simplex to the complex, returning a handle to the simplex.
@@ -153,8 +179,8 @@ impl Complex {
         subcomplex
     }
 
-    /// Presents the graph structure in DOT format.
-    pub fn dot(&self) -> String {
+    /// Creates a Hasse diagram in DOT format.
+    pub fn hasse(&self) -> String {
         let dot = petgraph::dot::Dot::with_config(&self.graph, &[petgraph::dot::Config::EdgeNoLabel]);
         format!("{}", dot)
     }
@@ -224,5 +250,21 @@ mod tests {
         let ntri = skele2.num_simplices_by_dimension(2);
         assert_eq!(skele2.dim(), 2);
         assert_eq!(ntri, 4);
+    }
+
+    #[test]
+    fn neighbors() {
+        let mut complex = Complex::new();
+        let _abcd = complex.push_recursive(Simplex::from(vec![1, 2, 3, 4]));
+
+        let abc = complex.find(&Simplex::from(vec![1,2,3])).unwrap();
+        let abd = complex.find(&Simplex::from(vec![1,2,4])).unwrap();
+        let acd = complex.find(&Simplex::from(vec![1,3,4])).unwrap();
+        let bcd = complex.find(&Simplex::from(vec![2,3,4])).unwrap();
+
+        let neighbors = complex.get_neighbors(abc);
+        assert!(neighbors.contains(&abd));
+        assert!(neighbors.contains(&acd));
+        assert!(neighbors.contains(&bcd));
     }
 }
