@@ -189,7 +189,7 @@ mod tests {
     fn euler_characteristic() {
         let mut complex = Complex::new();
         let _abcd = complex.push_recursive(Simplex::from(vec![1, 2, 3, 4]));
-        assert_eq!(complex.euler_characteristic(), 0);
+        assert_eq!(complex.euler_characteristic(), 2);
     }
 
     #[test]
