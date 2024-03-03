@@ -37,12 +37,8 @@ impl Complex {
     }
 
     /// Gets the tree's root (empty simplex)
-    pub fn get_root(&self) -> &Simplex {
-        self.get(self.root)
-    }
-
-    pub fn get_root_mut(&mut self) -> &mut Simplex {
-        self.get_mut(self.root)
+    pub fn get_root(&self) -> SimplexHandle {
+        self.root
     }
 
     /// Gets a `Vec` of parents of `handle`
