@@ -40,11 +40,12 @@ fn main() {
 
     // Print the simplices
     let d = complex.dim();
+    let n_simplices = complex.num_simplices();
+    let n_vertices = complex.num_simplices_by_dimension(0);
+    println!("Rips complex is of dimension {} - {} simplices - {} vertices.", d, n_simplices, n_vertices);
     for k in 0..d+1 {
-        print!("{}-simplices:", k);
-        for simplex in complex.iter().map(|h| complex.get(h).unwrap()).filter(|s| s.dim() == k) {
-            print!(" {}", simplex);
+        for simplex in complex.iter().map(|h| complex.get(h).unwrap()).filter(|s| s.simplex.dim() == k) {
+            println!("  {} -> [{}]", simplex.simplex, simplex.filtration_value);
         }
-        println!("");
     }
 }

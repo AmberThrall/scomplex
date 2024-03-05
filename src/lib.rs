@@ -7,6 +7,7 @@ pub mod rips_complex;
 pub use errors::*;
 pub use simplex::Simplex;
 pub use complex::Complex;
+pub use complex::FilteredSimplex;
 pub use rips_complex::RipsComplex;
 
 pub type Point = Vec<f32>;

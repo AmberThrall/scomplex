@@ -1,4 +1,4 @@
-use super::{splx, Complex, Point, PointCloud};
+use super::{splx, Complex, FilteredSimplex, Point, PointCloud};
 use itertools::*;
 
 fn euclidean_distance(a: &Point, b: &Point) -> f32 {
@@ -62,7 +62,10 @@ impl<'a> RipsComplex<'a> {
             for comb in (0..self.points.len()).combinations(2) {
                 let dist = (self.distance_fn)(&self.points[comb[0]], &self.points[comb[1]]);
                 if dist < self.threshold {
-                    complex.push(splx![comb[0], comb[1]]);
+                    complex.push_filtered(FilteredSimplex {
+                        simplex: splx![comb[0], comb[1]],
+                        filtration_value: dist,
+                    });
                 }
             }
         }
