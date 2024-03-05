@@ -42,7 +42,7 @@ fn main() {
     let d = complex.dim();
     for k in 0..d+1 {
         print!("{}-simplices:", k);
-        for simplex in complex.iter().map(|h| complex.get(h)).filter(|s| s.dim() == k) {
+        for simplex in complex.iter().map(|h| complex.get(h).unwrap()).filter(|s| s.dim() == k) {
             print!(" {}", simplex);
         }
         println!("");

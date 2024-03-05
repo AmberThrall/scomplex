@@ -5,6 +5,7 @@ use petgraph::{
     visit::{Bfs, Dfs}, Graph, Undirected
 };
 use std::collections::HashSet;
+use std::ops::{Index,IndexMut};
 use itertools::*;
 
 /// Pointer to simplex in complex.
@@ -35,7 +36,7 @@ impl Complex {
 
     /// Returns the number of simplicies by dimension
     pub fn num_simplices_by_dimension(&self, d: i32) -> usize {
-        self.iter().filter(|h| self.get(*h).dim() == d).count()
+        self.iter().filter(|h| self[*h].dim() == d).count()
     }
 
     /// Gets the tree's root (empty simplex)
@@ -44,18 +45,29 @@ impl Complex {
     }
 
     /// Gets a `Vec` of parents of `handle`
+    /// Returns an empty `Vec` if `handle is not found.
     pub fn get_parents(&self, handle: SimplexHandle) -> Vec<SimplexHandle> {
-        let d = self.get(handle).dim();
-        self.graph.neighbors_undirected(handle).filter(|h| self.get(*h).dim() == d-1).collect()
+        if let Some(sigma) = self.get(handle) {
+            let d = sigma.dim();
+            self.graph.neighbors_undirected(handle).filter(|h| self[*h].dim() == d-1).collect()
+        } else {
+            Vec::new()
+        }
     }
 
     /// Gets a `Vec` of children of `handle`
+    /// Returns an empty `Vec` if `handle is not found.
     pub fn get_children(&self, handle: SimplexHandle) -> Vec<SimplexHandle> {
-        let d = self.get(handle).dim();
-        self.graph.neighbors_undirected(handle).filter(|h| self.get(*h).dim() == d+1).collect()
+        if let Some(sigma) = self.get(handle) {
+            let d = sigma.dim();
+            self.graph.neighbors_undirected(handle).filter(|h| self[*h].dim() == d+1).collect()
+        } else {
+            Vec::new()
+        }
     }
 
     /// Gets a `Vec` of neighbors of `handle`
+    /// Returns an empty `Vec` if `handle is not found.
     pub fn get_neighbors(&self, handle: SimplexHandle) -> Vec<SimplexHandle> {
         let parents = self.get_parents(handle);
 
@@ -105,12 +117,12 @@ impl Complex {
     }
 
     /// Looks up a simplex node from a handle
-    pub fn get(&self, handle: SimplexHandle) -> &Simplex {
-        &self.graph[handle]
+    pub fn get(&self, handle: SimplexHandle) -> Option<&Simplex> {
+        self.graph.node_weight(handle)
     }
     
-    pub fn get_mut(&mut self, handle: SimplexHandle) -> &mut Simplex {
-        &mut self.graph[handle]
+    pub fn get_mut(&mut self, handle: SimplexHandle) -> Option<&mut Simplex> {
+        self.graph.node_weight_mut(handle)
     }
 
     /// Get an iterator over every simplex handle
@@ -128,7 +140,7 @@ impl Complex {
         let mut d = -1;
         let mut dfs = Dfs::new(&self.graph, self.root);
         while let Some(nx) = dfs.next(&self.graph) {
-            d = d.max(self.get(nx).dim());
+            d = d.max(self[nx].dim());
         }
 
         d
@@ -156,7 +168,7 @@ impl Complex {
 
         let mut bfs = Bfs::new(&self.graph, self.root);
         while let Some(nx) = bfs.next(&self.graph) {
-            let tau = self.get(nx);
+            let tau = self.get(nx).unwrap();
             if tau.dim() > j {
                 break;
             }
@@ -180,7 +192,7 @@ impl Complex {
         let d = self.dim();
         let mut neighbors = Vec::new();
         for h in self.iter() {
-            let sigma = self.get_mut(h);
+            let sigma = self.get_mut(h).unwrap();
             sigma.set_orientation(Orientation::None);
 
             if sigma.dim() == d && neighbors.is_empty() {
@@ -200,7 +212,7 @@ impl Complex {
 
             // Determine the needed orientations
             for face_h in self.get_parents(nbr) {
-                let tau = self.get(face_h);
+                let tau = self.get(face_h).unwrap();
                 if tau.orientation() == Orientation::None {
                     continue;
                 }
@@ -208,9 +220,9 @@ impl Complex {
                 let tau_orientation = tau.orientation();
                 let mut tau_clone = tau.clone();
 
-                let sigma = self.get_mut(nbr);
+                let sigma = self.get_mut(nbr).unwrap();
                 sigma.set_orientation(Orientation::Even);
-                tau_clone.induced_orientation(sigma)?;
+                tau_clone.induced_orientation(&sigma)?;
                 if tau_clone.orientation() == tau_orientation {
                     sigma.swap_orientation()?;
                 }
@@ -222,7 +234,7 @@ impl Complex {
             if orientations.len() > 1 {
                 for i in 0..orientations.len()-1 {
                     if orientations[i] != orientations[i+1] {
-                        self.get_mut(nbr).set_orientation(Orientation::None);
+                        self[nbr].set_orientation(Orientation::None);
                         return Err(OrientationError::Unorientable);
                     }
                 }
@@ -231,7 +243,7 @@ impl Complex {
             // Induce orientation onto unoriented faces and get neighbors
             self._orient_faces(nbr)?;
             for nbr_of_nbr in self.get_neighbors(nbr) {
-                if self.get(nbr_of_nbr).orientation() == Orientation::None && !neighbors.contains(&nbr_of_nbr) {
+                if self[nbr_of_nbr].orientation() == Orientation::None && !neighbors.contains(&nbr_of_nbr) {
                     neighbors.push(nbr_of_nbr);
                 }
             }
@@ -241,10 +253,10 @@ impl Complex {
     }
 
     fn _orient_faces(&mut self, root: SimplexHandle) -> Result<(), OrientationError> {
-        let sigma = self.get(root).clone();
+        let sigma = self[root].clone();
 
         for h in self.get_parents(root) {
-            let tau = self.get_mut(h);
+            let tau = self.get_mut(h).unwrap();
             if tau.orientation() == Orientation::None {
                 tau.induced_orientation(&sigma)?;
                 self._orient_faces(h)?;
@@ -260,15 +272,15 @@ impl Complex {
 
         // Get all (dim+1) combinations of (dim-1) simplices.
         let combinations = self.iter()
-            .filter(|h| self.get(*h).dim() == dim-1)
+            .filter(|h| self[*h].dim() == dim-1)
             .combinations(dim as usize + 1);
 
         let mut patches = Vec::new();
-        // For each combination, check if the union of simplices is (dim+1)-dimensional.
+        // For each combination, check if the union of simplices is (dim)-dimensional.
         for comb in combinations {
             let mut union: HashSet<usize> = HashSet::new();
             for h in comb {
-                let sigma = self.get(h);
+                let sigma = self.get(h).unwrap();
                 union = union.union(sigma.vertices())
                     .map(|x| *x)
                     .collect();
@@ -298,6 +310,20 @@ impl Clone for Complex {
     }
 }
 
+impl Index<SimplexHandle> for Complex {
+    type Output = Simplex;
+
+    fn index(&self, index: SimplexHandle) -> &Self::Output {
+        &self.graph[index]
+    }
+}
+
+impl IndexMut<SimplexHandle> for Complex {
+    fn index_mut(&mut self, index: SimplexHandle) -> &mut Self::Output {
+        &mut self.graph[index]
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -308,9 +334,9 @@ mod tests {
         let b = complex.push(Simplex::from(vec![2]));
         let ab = complex.push(Simplex::from(vec![1, 2]));
 
-        assert_eq!(complex.get(a).dim(), 0);
-        assert_eq!(complex.get(b).dim(), 0);
-        assert_eq!(complex.get(ab).dim(), 1);
+        assert_eq!(complex[a].dim(), 0);
+        assert_eq!(complex[b].dim(), 0);
+        assert_eq!(complex[ab].dim(), 1);
         assert_eq!(complex.dim(), 1);
     }
 
@@ -326,12 +352,12 @@ mod tests {
         let ac = complex.find(&Simplex::from(vec![1, 3])).unwrap();
         let bc = complex.find(&Simplex::from(vec![2, 3])).unwrap();
 
-        assert_eq!(complex.get(a).dim(), 0);
-        assert_eq!(complex.get(b).dim(), 0);
-        assert_eq!(complex.get(c).dim(), 0);
-        assert_eq!(complex.get(ab).dim(), 1);
-        assert_eq!(complex.get(ac).dim(), 1);
-        assert_eq!(complex.get(bc).dim(), 1);
+        assert_eq!(complex[a].dim(), 0);
+        assert_eq!(complex[b].dim(), 0);
+        assert_eq!(complex[c].dim(), 0);
+        assert_eq!(complex[ab].dim(), 1);
+        assert_eq!(complex[ac].dim(), 1);
+        assert_eq!(complex[bc].dim(), 1);
         assert_eq!(complex.dim(), 2);
     }
 
@@ -340,7 +366,6 @@ mod tests {
         let mut complex = Complex::new();
         let _abcd = complex.push(Simplex::from(vec![1, 2, 3, 4]));
         assert_eq!(complex.euler_characteristic(), 4 - 6 + 4 - 1);
-        println!("{}", complex.hasse());
     }
 
     #[test]
