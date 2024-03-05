@@ -160,6 +160,15 @@ impl Complex {
         self.graph.node_weight_mut(handle).map(|x| &mut x.simplex)
     }
 
+    /// Looks up a simplex node from a handle, returning just the filtration value
+    pub fn get_filtration_value(&self, handle: SimplexHandle) -> Option<&f32> {
+        self.graph.node_weight(handle).map(|x| &x.filtration_value)
+    }
+    
+    pub fn get_filtration_value_mut(&mut self, handle: SimplexHandle) -> Option<&mut f32> {
+        self.graph.node_weight_mut(handle).map(|x| &mut x.filtration_value)
+    }
+
     /// Get an iterator over every simplex handle
     pub fn iter(&self) -> petgraph::graph::NodeIndices<petgraph::graph::DefaultIx> {
         self.graph.node_indices()
