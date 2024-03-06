@@ -1,10 +1,10 @@
 use super::{splx, Complex, FilteredSimplex, Point, PointCloud};
 use itertools::*;
 
-fn euclidean_distance(a: &Point, b: &Point) -> f32 {
+fn euclidean_distance<const N: usize>(a: &Point<N>, b: &Point<N>) -> f32 {
     let mut s: f32 = 0.0;
 
-    for i in 0..a.len() {
+    for i in 0..N {
         s += (a[i] - b[i]) * (a[i] - b[i]);
     }
 
@@ -17,15 +17,15 @@ fn euclidean_distance(a: &Point, b: &Point) -> f32 {
 /// * `max_dim` - determines the the highest dimensional simplices to add to the complex.
 /// * `threshold` - only add edges if their distance is less than the threshold
 /// * `distance_fn` - distance function used to measure the distance between two points. Defaults to Euclidean distance.
-pub struct RipsComplex<'a> {
-    points: &'a PointCloud,
+pub struct RipsComplex<'a, const N: usize> {
+    points: &'a PointCloud<N>,
     threshold: f32,
     max_dim: i32,
-    distance_fn: Box<dyn Fn(&Point,&Point) -> f32>,
+    distance_fn: Box<dyn Fn(&Point<N>,&Point<N>) -> f32>,
 }
 
-impl<'a> RipsComplex<'a> {
-    pub fn new(points: &'a PointCloud, threshold: f32) -> Self {
+impl<'a, const N: usize> RipsComplex<'a,N> {
+    pub fn new(points: &'a PointCloud<N>, threshold: f32) -> Self {
         RipsComplex {
             points,
             threshold,
@@ -44,7 +44,7 @@ impl<'a> RipsComplex<'a> {
         self
     }
 
-    pub fn distance_fn(mut self, f: impl Fn(&Point,&Point) -> f32 + 'static) -> Self {
+    pub fn distance_fn(mut self, f: impl Fn(&Point<N>,&Point<N>) -> f32 + 'static) -> Self {
         self.distance_fn = Box::new(f);
         self
     }

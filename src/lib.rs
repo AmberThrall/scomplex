@@ -10,5 +10,5 @@ pub use complex::Complex;
 pub use complex::FilteredSimplex;
 pub use rips_complex::RipsComplex;
 
-pub type Point = Vec<f32>;
-pub type PointCloud = Vec<Point>;
+pub type Point<const N: usize> = [f32; N];
+pub type PointCloud<const N: usize> = Vec<Point<N>>;
