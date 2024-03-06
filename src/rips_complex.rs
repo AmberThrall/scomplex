@@ -62,7 +62,7 @@ impl<'a> RipsComplex<'a> {
             for comb in (0..self.points.len()).combinations(2) {
                 let dist = (self.distance_fn)(&self.points[comb[0]], &self.points[comb[1]]);
                 if dist < self.threshold {
-                    complex.push_filtered(FilteredSimplex {
+                    complex.push_filtered_simplex(FilteredSimplex {
                         simplex: splx![comb[0], comb[1]],
                         filtration_value: dist,
                     });

@@ -105,13 +105,13 @@ impl Complex {
     /// The filtration value defaults to the simplex's dimension.
     pub fn push(&mut self, simplex: Simplex) -> SimplexHandle {
         let d = simplex.dim();
-        self.push_filtered(FilteredSimplex {
+        self.push_filtered_simplex(FilteredSimplex {
             simplex,
             filtration_value: d as f32,
         })
     }
 
-    pub fn push_filtered(&mut self, simplex: FilteredSimplex) -> SimplexHandle {
+    pub fn push_filtered_simplex(&mut self, simplex: FilteredSimplex) -> SimplexHandle {
         if let Some(handle) = self.find(&simplex.simplex) {
             return handle;
         }
@@ -344,7 +344,7 @@ impl Complex {
 
         // Add in the patches.
         for patch in patches {
-            self.push_filtered(patch);
+            self.push_filtered_simplex(patch);
         }
     }
 }
