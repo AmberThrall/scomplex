@@ -1,16 +1,6 @@
 use super::{splx, Complex, FilteredSimplex, Point, PointCloud};
 use itertools::*;
 
-fn euclidean_distance<const N: usize>(a: &Point<N>, b: &Point<N>) -> f32 {
-    let mut s: f32 = 0.0;
-
-    for i in 0..N {
-        s += (a[i] - b[i]) * (a[i] - b[i]);
-    }
-
-    s.sqrt()
-}
-
 /// Complex factory using Vietoris-Rips
 /// The resulting simplices represent the indices of the points, i.e., the 1-simplex {0,1} represents the edge `points[0]` -- `points[1]`.
 /// See the `rips_complex` example for implementation details.
@@ -30,7 +20,7 @@ impl<'a, const N: usize> RipsComplex<'a,N> {
             points,
             threshold,
             max_dim: 1,
-            distance_fn: Box::new(euclidean_distance),
+            distance_fn: Box::new(crate::geom::euclidean_distance),
         }
     }
 
