@@ -16,7 +16,7 @@ fn main() {
 
     // Create the complex
     let now = Instant::now();
-    let complex = Delaunay::new(&data).build();
+    let complex = AlphaComplex::delaunay(&data).build();
     let elapsed = now.elapsed();
 
     println!("Construction time: {:.2?}", elapsed);
@@ -25,7 +25,7 @@ fn main() {
     let d = complex.dim();
     let n_simplices = complex.num_simplices();
     let n_vertices = complex.num_simplices_by_dimension(0);
-    println!("Delaunay complex is of dimension {} - {} simplices - {} vertices.", d, n_simplices, n_vertices);
+    println!("Alpha complex is of dimension {} - {} simplices - {} vertices.", d, n_simplices, n_vertices);
     for k in 0..d+1 {
         for simplex in complex.iter().map(|h| complex.get(h).unwrap()).filter(|s| s.simplex.dim() == k) {
             println!("  {} -> [{}]", simplex.simplex, simplex.filtration_value);

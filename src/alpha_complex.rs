@@ -1,24 +1,46 @@
 use super::{
     splx,
+    FilteredSimplex,
     Complex,
     Point,
     PointCloud,
     geom::{Edge, Triangle},
 };
 
-/// Complex factory using Delaunay Triangulation using Bowyer-Watson algorithm
+/// Complex factory using Alpha Complex via Bowyer-Watson algorithm
 /// The resulting simplices represent the indices of the points, i.e., the 1-simplex {0,1} represents the edge `points[0]` -- `points[1]`.
+/// Sets the filtration values for 1-simplices to the edge length, and the filtration values for
+/// 2-simplices as the max of filtration values among faces. Only adds simplices whose filtration
+/// values is <= `alpha`.
 /// Currently only supports a point cloud in R^2.
-/// See the `delaunay` example for implementation details.
-pub struct Delaunay<'a> {
+/// See the `delaunay_complex` example for implementation details.
+pub struct AlphaComplex<'a> {
     points: &'a PointCloud<2>,
+    alpha: f32,
+    distance_fn: Box<dyn Fn(&Point<2>,&Point<2>) -> f32>,
 }
 
-impl<'a> Delaunay<'a> {
-    pub fn new(points: &'a PointCloud<2>) -> Self {
-        Delaunay {
+impl<'a> AlphaComplex<'a> {
+    pub fn delaunay(points: &'a PointCloud<2>) -> Self {
+        AlphaComplex::new(points, f32::MAX)
+    }
+ 
+    pub fn new(points: &'a PointCloud<2>, alpha: f32) -> Self {
+        AlphaComplex {
             points,
+            alpha,
+            distance_fn: Box::new(crate::geom::euclidean_distance),
         }
+    }
+
+    pub fn alpha(mut self, alpha: f32) -> Self {
+        self.alpha = alpha;
+        self
+    }
+
+    pub fn distance_fn(mut self, f: impl Fn(&Point<2>,&Point<2>) -> f32 + 'static) -> Self {
+        self.distance_fn = Box::new(f);
+        self
     }
 
     pub fn build(self) -> Complex {
@@ -41,10 +63,44 @@ impl<'a> Delaunay<'a> {
         // Construct the complex.
         let mut complex = Complex::new();
         for tri in triangles {
+            let v0tov1 = (self.distance_fn)(&tri.v0, &tri.v1);
+            let v0tov2 = (self.distance_fn)(&tri.v0, &tri.v2);
+            let v1tov2 = (self.distance_fn)(&tri.v1, &tri.v2);
+
+            let max_dist = v0tov1.max(v0tov2).max(v1tov2);
+
             let i0 = self.points.iter().position(|&p| p == tri.v0).unwrap(); 
             let i1 = self.points.iter().position(|&p| p == tri.v1).unwrap(); 
             let i2 = self.points.iter().position(|&p| p == tri.v2).unwrap(); 
-            complex.push(splx![i0, i1, i2]);
+
+            if v0tov1 <= self.alpha {
+                complex.push_filtered_simplex(FilteredSimplex {
+                    simplex: splx![i0, i1],
+                    filtration_value: v0tov1,
+                });
+            }
+
+            if v0tov2 <= self.alpha {
+                complex.push_filtered_simplex(FilteredSimplex {
+                    simplex: splx![i0, i2],
+                    filtration_value: v0tov2,
+                });
+            }
+
+            if v1tov2 <= self.alpha {
+                complex.push_filtered_simplex(FilteredSimplex {
+                    simplex: splx![i1, i2],
+                    filtration_value: v1tov2,
+                });
+            }
+
+            if max_dist <= self.alpha {
+                complex.push_filtered_simplex(FilteredSimplex {
+                    simplex: splx![i0, i1, i2],
+                    filtration_value: max_dist,
+                });
+            }
+
         }
         complex
     }
@@ -83,7 +139,7 @@ impl<'a> Delaunay<'a> {
                 false
             } else {
                 true 
-            }
+           }
         });
 
         // Get the unique edges
