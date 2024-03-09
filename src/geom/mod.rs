@@ -1,14 +1,18 @@
 extern crate nalgebra as na;
 use super::Point;
 
-pub fn euclidean_distance<const N: usize>(a: &Point<N>, b: &Point<N>) -> f32 {
+pub fn squared_euclidean_distance<const N: usize>(a: &Point<N>, b: &Point<N>) -> f32 {
     let mut s: f32 = 0.0;
 
     for i in 0..N {
         s += (a[i] - b[i]) * (a[i] - b[i]);
     }
 
-    s.sqrt()
+    s
+}
+
+pub fn euclidean_distance<const N: usize>(a: &Point<N>, b: &Point<N>) -> f32 {
+    squared_euclidean_distance(a, b).sqrt()
 }
 
 #[derive(Debug,PartialEq,Clone,Copy)]

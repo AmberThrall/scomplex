@@ -17,7 +17,6 @@ use super::{
 pub struct AlphaComplex<'a> {
     points: &'a PointCloud<2>,
     alpha: f32,
-    distance_fn: Box<dyn Fn(&Point<2>,&Point<2>) -> f32>,
 }
 
 impl<'a> AlphaComplex<'a> {
@@ -29,17 +28,11 @@ impl<'a> AlphaComplex<'a> {
         AlphaComplex {
             points,
             alpha,
-            distance_fn: Box::new(crate::geom::euclidean_distance),
         }
     }
 
     pub fn alpha(mut self, alpha: f32) -> Self {
         self.alpha = alpha;
-        self
-    }
-
-    pub fn distance_fn(mut self, f: impl Fn(&Point<2>,&Point<2>) -> f32 + 'static) -> Self {
-        self.distance_fn = Box::new(f);
         self
     }
 
@@ -63,9 +56,9 @@ impl<'a> AlphaComplex<'a> {
         // Construct the complex.
         let mut complex = Complex::new();
         for tri in triangles {
-            let v0tov1 = (self.distance_fn)(&tri.v0, &tri.v1);
-            let v0tov2 = (self.distance_fn)(&tri.v0, &tri.v2);
-            let v1tov2 = (self.distance_fn)(&tri.v1, &tri.v2);
+            let v0tov1 = crate::geom::euclidean_distance(&tri.v0, &tri.v1) / 2.0;
+            let v0tov2 = crate::geom::euclidean_distance(&tri.v0, &tri.v2) / 2.0;
+            let v1tov2 = crate::geom::euclidean_distance(&tri.v1, &tri.v2) / 2.0;
 
             let max_dist = v0tov1.max(v0tov2).max(v1tov2);
 
