@@ -60,7 +60,7 @@ impl<'a> AlphaComplex<'a> {
             let v0tov2 = crate::geom::euclidean_distance(&tri.v0, &tri.v2) / 2.0;
             let v1tov2 = crate::geom::euclidean_distance(&tri.v1, &tri.v2) / 2.0;
 
-            let max_dist = v0tov1.max(v0tov2).max(v1tov2);
+            let max_dist = tri.circumcircle.radius;
 
             let i0 = self.points.iter().position(|&p| p == tri.v0).unwrap(); 
             let i1 = self.points.iter().position(|&p| p == tri.v1).unwrap(); 
