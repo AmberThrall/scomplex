@@ -6,7 +6,7 @@ use std::ops;
 
 /// Represents a chain with underlying group Z_2.
 #[derive(PartialEq, Clone)]
-pub struct Chain(HashSet<SimplexHandle>);
+pub struct Chain(pub HashSet<SimplexHandle>);
 
 impl Chain {
     /// Constructs a zero-chain

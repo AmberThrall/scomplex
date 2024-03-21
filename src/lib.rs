@@ -6,6 +6,7 @@ pub mod rips_complex;
 pub mod alpha_complex;
 pub mod geom;
 pub mod chain;
+pub mod boundary_matrix;
 
 pub use errors::*;
 pub use simplex::Simplex;
@@ -14,6 +15,7 @@ pub use complex::FilteredSimplex;
 pub use rips_complex::RipsComplex;
 pub use alpha_complex::AlphaComplex;
 pub use chain::Chain;
+pub use boundary_matrix::BoundaryMatrix;
 
 pub type Point<const N: usize> = [f32; N];
 pub type PointCloud<const N: usize> = Vec<Point<N>>;
