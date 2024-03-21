@@ -229,6 +229,39 @@ impl Complex {
         format!("{}", dot)
     }
 
+    // Computes the pth Betti number via boundary matrices
+    pub fn betti(&mut self, p: i32) -> i32 {
+        if p < 0 || p > self.dim() { return 0; }
+
+        fn get_identity_size(bm: &crate::BoundaryMatrix) -> i32 {
+            let max_size = bm.row_labels.len().min(bm.col_labels.len());
+            let mut size = 0;
+            for i in 0..max_size {
+               if bm.m[(i,i)] == 0 { break; }
+               size = i;
+            }
+            size as i32 + 1
+        }
+
+        let mut bmatrix_p = crate::BoundaryMatrix::new(p, &self).unwrap();
+        bmatrix_p.snf();
+        let zp = (bmatrix_p.col_labels.len() as i32) - get_identity_size(&bmatrix_p);
+
+        let bp = if p == self.dim() {
+            0
+        } else {
+            let mut bmatrix_pp1 = crate::BoundaryMatrix::new(p+1, &self).unwrap();
+            bmatrix_pp1.snf();
+            get_identity_size(&bmatrix_pp1)
+        };
+
+        if p == 0 {
+            zp - bp + 1
+        } else {
+            zp - bp
+        }
+    }
+
     /// Attempts to orient the simplices.
     pub fn orient(&mut self) -> Result<(), OrientationError> {
         // 1. Set the orientation of a random d-simplex and induce its orientation onto its faces, then
