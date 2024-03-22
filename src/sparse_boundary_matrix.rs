@@ -144,28 +144,29 @@ impl SparseBoundaryMatrix {
         // If there is some j>=i & k>=i such that m[j,k] = 1
         let search = self.entries.iter()
             .filter(|(r,c)| *r >= i && *c >= i)
-            .map(|(r,c)| (*r,*c))
             .next();
 
         if let Some((j,k)) = search {
+            let j = *j;
+            let k = *k;
             self.swap_rows(j, i);
             self.swap_columns(k, i);
 
             // Zero out 1's below (i,i)
-            let rows: Vec<(usize, usize)> = self.entries.iter()
+            let rows: Vec<usize> = self.entries.iter()
                 .filter(|(r,c)| *c == i && *r > i)
-                .map(|(r,c)| (*r,*c))
+                .map(|(r,_c)| *r)
                 .collect();
-            for (r,_c) in rows {
+            for r in rows {
                 self.add_row(r, i);
             }
     
             // Zero out 1's right of (i,i)
-            let cols: Vec<(usize, usize)> = self.entries.iter()
+            let cols: Vec<usize> = self.entries.iter()
                 .filter(|(r,c)| *r == i && *c > i)
-                .map(|(r,c)| (*r,*c))
+                .map(|(_r,c)| *c)
                 .collect();
-            for (_r,c) in cols {
+            for c in cols {
                 self.add_column(c, i);
             }
 

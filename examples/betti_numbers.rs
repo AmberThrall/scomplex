@@ -29,25 +29,13 @@ fn main() {
 
     // Betti numbers
     let mut euler_characteristic = 0;
-    //for p in 0..=complex.dim() {
-    //    let now = Instant::now();
-    //    let betti = complex.betti(p);
-    //    euler_characteristic += (if p % 2 == 0 { 1 } else { -1 }) * betti;
-    //    let elapsed = now.elapsed();
-    //    println!("beta_{} = {} (computed in {:.2?})", p, betti, elapsed);
-    //}
+    for p in 0..=complex.dim() {
+        let now = Instant::now();
+        let betti = complex.betti(p);
+        euler_characteristic += (if p % 2 == 0 { 1 } else { -1 }) * betti;
+        let elapsed = now.elapsed();
+        println!("beta_{} = {} (computed in {:.2?})", p, betti, elapsed);
+    }
 
     println!("Sanity: {} == {}", euler_characteristic, complex.euler_characteristic());
-
-    // Time
-    let now = Instant::now();
-    let mut bmatrix_p = crate::SparseBoundaryMatrix::new(1, &complex);
-    let elapsed = now.elapsed();
-    println!("Construction: {:.2?}", elapsed);
-    println!("Size: {:?}", bmatrix_p.shape());
-
-    let now = Instant::now();
-    bmatrix_p.snf();
-    let elapsed = now.elapsed();
-    println!("SNF: {:.2?}", elapsed);
 }
