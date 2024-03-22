@@ -231,28 +231,20 @@ impl Complex {
 
     // Computes the pth Betti number via boundary matrices
     pub fn betti(&mut self, p: i32) -> i32 {
-        if p < 0 || p > self.dim() { return 0; }
+        use std::time::Instant;
+        let dim = self.dim();
+        if p < 0 || p > dim { return 0; }
 
-        fn get_identity_size(bm: &crate::BoundaryMatrix) -> i32 {
-            let max_size = bm.row_labels.len().min(bm.col_labels.len());
-            let mut size = 0;
-            for i in 0..max_size {
-               if bm.m[(i,i)] == 0 { break; }
-               size = i;
-            }
-            size as i32 + 1
-        }
-
-        let mut bmatrix_p = crate::BoundaryMatrix::new(p, &self).unwrap();
+        let mut bmatrix_p = crate::SparseBoundaryMatrix::new(p, &self);
         bmatrix_p.snf();
-        let zp = (bmatrix_p.col_labels.len() as i32) - get_identity_size(&bmatrix_p);
+        let zp = (bmatrix_p.shape().1 as i32) - (bmatrix_p.entries.len() as i32);
 
-        let bp = if p == self.dim() {
+        let bp = if p == dim {
             0
         } else {
-            let mut bmatrix_pp1 = crate::BoundaryMatrix::new(p+1, &self).unwrap();
+            let mut bmatrix_pp1 = crate::SparseBoundaryMatrix::new(p+1, &self);
             bmatrix_pp1.snf();
-            get_identity_size(&bmatrix_pp1)
+            bmatrix_pp1.entries.len() as i32
         };
 
         if p == 0 {
