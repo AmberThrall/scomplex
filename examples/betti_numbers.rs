@@ -25,7 +25,7 @@ fn main() {
     sphere.push(splx![1,2,3]);
     sphere.push(splx![0,2,3]);
 
-    println!("Complex          β₀   β₁   β₂   Χ   Time");
+    println!("Manifold         β₀   β₁   β₂   Χ   Time");
     println!("--------------- ---- ---- ---- --- ---------");
     compute("Disk", &disk);
     compute("Sphere", &sphere);
