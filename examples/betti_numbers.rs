@@ -16,19 +16,10 @@ fn compute(name: &str, complex: &Complex) {
 }
 
 fn main() {
-    let mut disk = Complex::new();
-    disk.push(splx![0,1,2]);
-
-    let mut sphere = Complex::new();
-    sphere.push(splx![0,1,2]);
-    sphere.push(splx![0,1,3]);
-    sphere.push(splx![1,2,3]);
-    sphere.push(splx![0,2,3]);
-
     println!("Manifold         β₀   β₁   β₂   Χ   Time");
     println!("--------------- ---- ---- ---- --- ---------");
-    compute("Disk", &disk);
-    compute("Sphere", &sphere);
+    compute("Disk", &Complex::disk());
+    compute("Sphere", &Complex::sphere());
     compute("Cylinder", &Complex::cylinder());
     compute("Mobius Strip", &Complex::mobius_strip());
     compute("Torus", &Complex::torus());

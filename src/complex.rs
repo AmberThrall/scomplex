@@ -46,6 +46,23 @@ impl Complex {
         }
     }
 
+    pub fn disk() -> Complex {
+        use super::splx;
+        let mut complex = Complex::new();
+        complex.push(splx![0,1,2]);
+        complex
+    }
+
+    pub fn sphere() -> Complex {
+        use super::splx;
+        let mut complex = Complex::new();
+        complex.push(splx![0,1,2]);
+        complex.push(splx![0,1,3]);
+        complex.push(splx![1,2,3]);
+        complex.push(splx![0,2,3]);
+        complex 
+    }
+
     pub fn cylinder() -> Complex {
         use super::splx;
         let mut complex = Complex::new();
