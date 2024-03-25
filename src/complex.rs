@@ -46,6 +46,102 @@ impl Complex {
         }
     }
 
+    pub fn cylinder() -> Complex {
+        use super::splx;
+        let mut complex = Complex::new();
+        complex.push(splx![0,1,3]); //abd
+        complex.push(splx![0,3,5]); //adf
+        complex.push(splx![0,2,4]); //ace
+        complex.push(splx![0,4,5]); //aef
+        complex.push(splx![1,2,3]); //bcd
+        complex.push(splx![2,3,4]); //cde
+        complex
+    }
+
+    pub fn mobius_strip() -> Complex {
+        use super::splx;
+        let mut complex = Complex::new();
+        complex.push(splx![0,1,4]); //abe
+        complex.push(splx![0,3,4]); //ade
+        complex.push(splx![0,3,5]); //adf
+        complex.push(splx![1,2,4]); //bce
+        complex.push(splx![2,4,5]); //cef
+        complex
+    }
+
+    pub fn torus() -> Complex {
+        use super::splx;
+        let mut complex = Complex::new();
+        complex.push(splx![0,1,4]); //abe
+        complex.push(splx![0,2,6]); //acg
+        complex.push(splx![0,4,6]); //aeg
+        complex.push(splx![0,3,7]); //adh
+        complex.push(splx![0,1,7]); //abh
+        complex.push(splx![0,2,3]); //acd
+        complex.push(splx![1,4,5]); //bef
+        complex.push(splx![1,2,5]); //bcf
+        complex.push(splx![1,7,8]); //bhi
+        complex.push(splx![1,2,8]); //bci
+        complex.push(splx![2,5,6]); //cfg
+        complex.push(splx![2,3,8]); //cdi
+        complex.push(splx![3,4,5]); //def
+        complex.push(splx![3,5,7]); //dfh
+        complex.push(splx![3,4,8]); //dei
+        complex.push(splx![4,6,8]); //egi
+        complex.push(splx![5,6,7]); //fgh
+        complex.push(splx![6,7,8]); //ghi
+        complex
+    }
+
+    pub fn klein_bottle() -> Complex {
+        use super::splx;
+        let mut complex = Complex::new();
+        complex.push(splx![0,1,4]); // abe
+        complex.push(splx![0,1,7]); // abh
+        complex.push(splx![0,3,7]); // adh
+        complex.push(splx![0,2,6]); // acg
+        complex.push(splx![0,3,6]); // adg
+        complex.push(splx![0,2,4]); // ace
+        complex.push(splx![1,4,5]); // bef
+        complex.push(splx![1,2,5]); // bcf
+        complex.push(splx![1,2,8]); // bci
+        complex.push(splx![1,7,8]); // bhi
+        complex.push(splx![2,5,6]); // cfg 
+        complex.push(splx![2,4,8]); // cei 
+        complex.push(splx![3,4,5]); // def 
+        complex.push(splx![3,5,7]); // dfh 
+        complex.push(splx![3,4,8]); // dei
+        complex.push(splx![3,6,8]); // dgi
+        complex.push(splx![5,6,7]); // fgh 
+        complex.push(splx![6,7,8]); // ghi
+        complex
+    }
+
+    pub fn real_projective_plane() -> Complex {
+        use super::splx;
+        let mut complex = Complex::new();
+        // a=0, b=1, c=2, d=3, e=4, f=5, g=6, h=7, i=8, j=9
+        complex.push(splx![0,1,5]); //abf
+        complex.push(splx![0,1,9]); //abj
+        complex.push(splx![0,5,9]); //afj
+        complex.push(splx![1,5,6]); //bfg
+        complex.push(splx![1,2,6]); //bcg
+        complex.push(splx![1,2,9]); //bcj
+        complex.push(splx![2,6,7]); //cgh
+        complex.push(splx![2,3,7]); //cdh
+        complex.push(splx![2,3,8]); //cdi
+        complex.push(splx![2,8,9]); //cij
+        complex.push(splx![3,4,7]); //deh
+        complex.push(splx![3,4,8]); //dei
+        complex.push(splx![4,5,6]); //efg
+        complex.push(splx![4,6,8]); //egi
+        complex.push(splx![4,5,9]); //efj
+        complex.push(splx![4,7,9]); //ehj
+        complex.push(splx![6,7,8]); //ghi
+        complex.push(splx![7,8,9]); //hij
+        complex
+    }
+
     /// Returns the number of simplices
     pub fn num_simplices(&self) -> usize {
         self.graph.node_count()
@@ -230,8 +326,7 @@ impl Complex {
     }
 
     // Computes the pth Betti number via boundary matrices
-    pub fn betti(&mut self, p: i32) -> i32 {
-        use std::time::Instant;
+    pub fn betti(&self, p: i32) -> i32 {
         let dim = self.dim();
         if p < 0 || p > dim { return 0; }
 
